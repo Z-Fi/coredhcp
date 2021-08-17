@@ -28,6 +28,7 @@ import (
 	pl_searchdomains "github.com/coredhcp/coredhcp/plugins/searchdomains"
 	pl_serverid "github.com/coredhcp/coredhcp/plugins/serverid"
 	pl_sleep "github.com/coredhcp/coredhcp/plugins/sleep"
+	pl_staticroute "github.com/coredhcp/coredhcp/plugins/staticroute"
 	pl_execute "github.com/coredhcp/coredhcp/plugins/execute"
 	pl_tiny_subnets "github.com/coredhcp/coredhcp/plugins/tiny_subnets"
 
@@ -72,6 +73,7 @@ var desiredPlugins = []*plugins.Plugin{
 	&pl_searchdomains.Plugin,
 	&pl_serverid.Plugin,
 	&pl_sleep.Plugin,
+	&pl_staticroute.Plugin,
 	&pl_execute.Plugin,
 	&pl_tiny_subnets.Plugin,
 }
