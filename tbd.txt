@@ -1,0 +1,1 @@
+- Fix state propagation for plugins. Currently abusing OptionDiscriminationString
