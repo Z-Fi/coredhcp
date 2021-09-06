@@ -77,6 +77,7 @@ func (p *PluginState) executeHandler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4,
 
 	// Temporary workaround for propagating info 
 	interfaceName := string(req.Options.Get(dhcpv4.GenericOptionCode(dhcpv4.OptionDiscriminationString)))
+	interfaceName = reg.ReplaceAllString(interfaceName, "")
 
 	cmd := exec.Command(p.Script, resp.YourIPAddr.String(), resp.ClientHWAddr.String(), filteredHostName, interfaceName, resp.Router()[0].String())
 
