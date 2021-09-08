@@ -78,7 +78,7 @@ func (p *PluginState) Handler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) 
 		var routerIP net.IP
 		var ip net.IP
 
-		for u32_ip := ipStart; u32_ip < ipEnd; u32_ip += 4 {
+		for u32_ip := ipStart; u32_ip + 3 < ipEnd; u32_ip += 4 {
 				u := u32_ip + 1
 				routerIP = net.IPv4(byte(u>>24), byte(u>>16), byte(u>>8), byte(u))
 
