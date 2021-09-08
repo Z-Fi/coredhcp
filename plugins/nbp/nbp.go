@@ -90,7 +90,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 	return nbpHandler4, nil
 }
 
-func nbpHandler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+func nbpHandler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	if opt59 == nil {
 		// nothing to do
 		return resp, true
@@ -116,7 +116,7 @@ func nbpHandler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	return resp, true
 }
 
-func nbpHandler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func nbpHandler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	if opt66 == nil || opt67 == nil {
 		// nothing to do
 		return resp, true

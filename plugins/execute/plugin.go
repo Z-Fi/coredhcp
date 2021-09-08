@@ -55,7 +55,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 
 	return p.executeHandler4, nil
 }
-func (p *PluginState) executeHandler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+func (p *PluginState) executeHandler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	log.Printf("received DHCPv6 packet: %s", req.Summary())
 	log.Printf("Made response: %s", resp.Summary())
 
@@ -65,7 +65,7 @@ func (p *PluginState) executeHandler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, b
 	return resp, false
 }
 
-func (p *PluginState) executeHandler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func (p *PluginState) executeHandler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	//TBD, json message of resp.Summary() ?
 
 	//req.hostname needs to be filtered
@@ -75,7 +75,7 @@ func (p *PluginState) executeHandler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4,
 	}
 	filteredHostName := reg.ReplaceAllString(req.HostName(), "")
 
-	// Temporary workaround for propagating info 
+	// Temporary workaround for propagating info
 	interfaceName := string(req.Options.Get(dhcpv4.GenericOptionCode(dhcpv4.OptionDiscriminationString)))
 	interfaceName = reg.ReplaceAllString(interfaceName, "")
 

@@ -62,14 +62,14 @@ func setup4(args ...string) (handler.Handler4, error) {
 	return domainSearchListHandler4, nil
 }
 
-func domainSearchListHandler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+func domainSearchListHandler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	resp.UpdateOption(dhcpv6.OptDomainSearchList(&rfc1035label.Labels{
 		Labels: copySlice(v6SearchList),
 	}))
 	return resp, false
 }
 
-func domainSearchListHandler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func domainSearchListHandler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	resp.UpdateOption(dhcpv4.OptDomainSearch(&rfc1035label.Labels{
 		Labels: copySlice(v4SearchList),
 	}))

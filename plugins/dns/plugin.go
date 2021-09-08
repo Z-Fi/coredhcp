@@ -61,7 +61,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 }
 
 // Handler6 handles DHCPv6 packets for the dns plugin
-func Handler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+func Handler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	decap, err := req.GetInnerMessage()
 	if err != nil {
 		log.Errorf("Could not decapsulate relayed message, aborting: %v", err)
@@ -75,7 +75,7 @@ func Handler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 }
 
 //Handler4 handles DHCPv4 packets for the dns plugin
-func Handler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	if req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
 		resp.Options.Update(dhcpv4.OptDNS(dnsServers4...))
 	}

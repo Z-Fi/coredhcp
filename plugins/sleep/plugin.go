@@ -69,7 +69,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 }
 
 func makeSleepHandler6(delay time.Duration) handler.Handler6 {
-	return func(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+	return func(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 		log.Printf("introducing delay of %s in response", delay)
 		// return the unmodified response, and instruct coredhcp to continue to
 		// the next plugin.
@@ -79,7 +79,7 @@ func makeSleepHandler6(delay time.Duration) handler.Handler6 {
 }
 
 func makeSleepHandler4(delay time.Duration) handler.Handler4 {
-	return func(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+	return func(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 		log.Printf("introducing delay of %s in response", delay)
 		// return the unmodified response, and instruct coredhcp to continue to
 		// the next plugin.

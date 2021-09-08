@@ -33,7 +33,7 @@ var (
 )
 
 // Handler6 handles DHCPv6 packets for the server_id plugin.
-func Handler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
+func Handler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 	if v6ServerID == nil {
 		log.Fatal("BUG: Plugin is running uninitialized!")
 		return nil, true
@@ -73,7 +73,7 @@ func Handler6(req, resp dhcpv6.DHCPv6) (dhcpv6.DHCPv6, bool) {
 }
 
 // Handler4 handles DHCPv4 packets for the server_id plugin.
-func Handler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	if v4ServerID == nil {
 		log.Fatal("BUG: Plugin is running uninitialized!")
 		return nil, true

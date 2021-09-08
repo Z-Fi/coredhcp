@@ -43,7 +43,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 }
 
 //Handler4 handles DHCPv4 packets for the router plugin
-func Handler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	resp.Options.Update(dhcpv4.OptRouter(routers...))
 	return resp, false
 }

@@ -14,6 +14,7 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv6"
+	"github.com/coredhcp/coredhcp/handler"
 )
 
 // HandleMsg6 runs for every received DHCPv6 packet. It will run every
@@ -54,9 +55,12 @@ func (l *listener6) HandleMsg6(buf []byte, oob *ipv6.ControlMessage, peer *net.U
 		return
 	}
 
+	intf, err := net.InterfaceByIndex(oob.IfIndex)
+	state := handler.PropagateState{InterfaceName: intf.Name}
+
 	var stop bool
 	for _, handler := range l.handlers {
-		resp, stop = handler(d, resp)
+		resp, stop = handler(&state, d, resp)
 		if stop {
 			break
 		}
@@ -134,11 +138,13 @@ func (l *listener4) HandleMsg4(buf []byte, oob *ipv4.ControlMessage, _peer net.A
 	intf, err := net.InterfaceByIndex(oob.IfIndex)
 
 	//add the interface name to the unused OptionDiscriminationString option to propagate to later plugins
-	req.Options.Update(dhcpv4.OptGeneric(dhcpv4.GenericOptionCode(dhcpv4.OptionDiscriminationString), []byte(intf.Name) ))
+	//req.Options.Update(dhcpv4.OptGeneric(dhcpv4.GenericOptionCode(dhcpv4.OptionDiscriminationString), []byte(intf.Name) ))
+
+	state := handler.PropagateState{InterfaceName: intf.Name}
 
 	resp = tmp
 	for _, handler := range l.handlers {
-		resp, stop = handler(req, resp)
+		resp, stop = handler(&state, req, resp)
 		if stop {
 			break
 		}
