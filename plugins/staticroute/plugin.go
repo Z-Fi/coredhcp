@@ -61,7 +61,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 }
 
 // Handler4 handles DHCPv4 packets for the static routes plugin
-func Handler4(rstate *handler.PropagateState, eq, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func Handler4(state *handler.PropagateState, eq, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	if len(routes) > 0 {
 		resp.Options.Update(dhcpv4.Option{
 			Code:  dhcpv4.OptionCode(dhcpv4.OptionClasslessStaticRoute),

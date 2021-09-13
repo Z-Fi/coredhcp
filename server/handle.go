@@ -137,9 +137,6 @@ func (l *listener4) HandleMsg4(buf []byte, oob *ipv4.ControlMessage, _peer net.A
 
 	intf, err := net.InterfaceByIndex(oob.IfIndex)
 
-	//add the interface name to the unused OptionDiscriminationString option to propagate to later plugins
-	//req.Options.Update(dhcpv4.OptGeneric(dhcpv4.GenericOptionCode(dhcpv4.OptionDiscriminationString), []byte(intf.Name) ))
-
 	state := handler.PropagateState{InterfaceName: intf.Name}
 
 	resp = tmp
