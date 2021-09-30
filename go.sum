@@ -120,6 +120,7 @@ github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22
 github.com/jsimonetti/rtnetlink v0.0.0-20190606172950-9527aa82566a/go.mod h1:Oz+70psSo5OFh8DBl0Zv2ACw7Esh6pPUphlvZG9x7uw=
 github.com/jsimonetti/rtnetlink v0.0.0-20200117123717-f846d4f6c1f4/go.mod h1:WGuG/smIU4J/54PblvSbh+xvCZmpJnFgr3ds6Z55XMQ=
 github.com/jsimonetti/rtnetlink v0.0.0-20201009170750-9c6f07d100c1/go.mod h1:hqoO/u39cqLeBLebZ8fWdE96O7FxrAsRYhnVOdgHxok=
+github.com/jsimonetti/rtnetlink v0.0.0-20201110080708-d2c240429e6c h1:7cpGGTQO6+OuYQWkueqeXuErSjs1NZtpALpv1x7Mq4g=
 github.com/jsimonetti/rtnetlink v0.0.0-20201110080708-d2c240429e6c/go.mod h1:huN4d1phzjhlOsNIjFsw2SVRbwIHj3fJDMEU2SDPTmg=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
@@ -156,6 +157,7 @@ github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7/go.mod h1:U6ZQob
 github.com/mdlayher/netlink v0.0.0-20190409211403-11939a169225/go.mod h1:eQB3mZE4aiYnlUsyGGCOpPETfdQq4Jhsgf1fk3cwQaA=
 github.com/mdlayher/netlink v1.0.0/go.mod h1:KxeJAFOFLG6AjpyDkQ/iIhxygIUKD+vcwqcnu43w/+M=
 github.com/mdlayher/netlink v1.1.0/go.mod h1:H4WCitaheIsdF9yOYu8CFmCgQthAPIWZmcKp9uZHgmY=
+github.com/mdlayher/netlink v1.1.1 h1:VqG+Voq9V4uZ+04vjIrcSCWDpf91B1xxbP4QBUmUJE8=
 github.com/mdlayher/netlink v1.1.1/go.mod h1:WTYpFb/WTvlRJAyKhZL5/uy69TDDpHHu2VZmb2XgV7o=
 github.com/mdlayher/raw v0.0.0-20190606142536-fef19f00fc18/go.mod h1:7EpbotpCmVZcu+KCX4g9WaRNuu11uyhiW7+Le1dKawg=
 github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 h1:aFkJ6lx4FPip+S+Uw4aTegFMct9shDvP+79PsSxpm3w=
