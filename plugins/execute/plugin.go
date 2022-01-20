@@ -74,6 +74,9 @@ func (p *PluginState) executeHandler4(state *handler.PropagateState, req, resp *
 		log.Fatalf("regexp failed: %v", err)
 	}
 	filteredHostName := reg.ReplaceAllString(req.HostName(), "")
+        if filteredHostName == "" {
+          filteredHostName = "DefaultMissingName"
+        }
 
 	interfaceName := string(state.InterfaceName)
 	interfaceName = reg.ReplaceAllString(interfaceName, "")
