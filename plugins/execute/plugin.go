@@ -66,9 +66,6 @@ func (p *PluginState) executeHandler6(state *handler.PropagateState, req, resp d
 }
 
 func (p *PluginState) executeHandler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
-	//TBD, json message of resp.Summary() ?
-
-	//req.hostname needs to be filtered
 	reg, err := regexp.Compile("[^A-Za-z0-9.-_]+")
 	if err != nil {
 		log.Fatalf("regexp failed: %v", err)
