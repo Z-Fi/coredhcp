@@ -16,7 +16,7 @@ import (
 )
 
 // loadRecords loads the DHCPv6/v4 Records global map with records stored on
-// the specified file. The records have to be one per line, a mac address and an
+// the specified file. The records have to be one per line, a mac/wg address and an
 // IP address.
 func loadRecords(r io.Reader) (map[string]*Record, error) {
 	sc := bufio.NewScanner(r)
@@ -30,10 +30,9 @@ func loadRecords(r io.Reader) (map[string]*Record, error) {
 		if len(tokens) != 3 {
 			return nil, fmt.Errorf("malformed line, want 3 fields, got %d: %s", len(tokens), line)
 		}
-		hwaddr, err := net.ParseMAC(tokens[0])
-		if err != nil {
-			return nil, fmt.Errorf("malformed hardware address: %s", tokens[0])
-		}
+
+		addr := tokens[0]
+
 		ipaddr := net.ParseIP(tokens[1])
 		if ipaddr.To4() == nil {
 			return nil, fmt.Errorf("expected an IPv4 address, got: %v", ipaddr)
@@ -42,7 +41,7 @@ func loadRecords(r io.Reader) (map[string]*Record, error) {
 		if err != nil {
 			return nil, fmt.Errorf("expected time of exipry in RFC3339 format, got: %v", tokens[2])
 		}
-		records[hwaddr.String()] = &Record{IP: ipaddr, expires: expires}
+		records[addr] = &Record{IP: ipaddr, expires: expires}
 	}
 	return records, nil
 }
@@ -61,8 +60,8 @@ func loadRecordsFromFile(filename string) (map[string]*Record, error) {
 }
 
 // saveIPAddress writes out a lease to storage
-func (p *PluginState) saveIPAddress(mac net.HardwareAddr, record *Record) error {
-	_, err := p.leasefile.WriteString(mac.String() + " " + record.IP.String() + " " + record.expires.Format(time.RFC3339) + "\n")
+func (p *PluginState) saveIPAddress(addr string, record *Record) error {
+	_, err := p.leasefile.WriteString(addr + " " + record.IP.String() + " " + record.expires.Format(time.RFC3339) + "\n")
 	if err != nil {
 		return err
 	}

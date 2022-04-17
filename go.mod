@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/chappjc/logrus-prefix v0.0.0-20180227015900-3a1d64819adb
 	github.com/google/gopacket v1.1.19
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/insomniacslk/dhcp v0.0.0-20210120172423-cc9239ac6294
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/magiconair/properties v1.8.4 // indirect

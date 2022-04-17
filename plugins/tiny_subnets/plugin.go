@@ -12,12 +12,63 @@ import (
 	"os"
 	"sync"
 	"time"
+	"strings"
 
 	"github.com/coredhcp/coredhcp/handler"
 	"github.com/coredhcp/coredhcp/logger"
 	"github.com/coredhcp/coredhcp/plugins"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 )
+
+import (
+        "github.com/gorilla/mux"
+        "net/http"
+				"encoding/json"
+)
+
+var UNIX_PLUGIN_LISTENER = "/state/dhcp/tinysubnets_plugin"
+
+type AbstractDHCPRequest struct {
+	Identifier string
+}
+
+// When an abstract device is added:
+// request an IP address, returning a Record on success
+// This allows decoupling DHCP records from MAC addresses/UDP DHCP packets.
+func (p *PluginState) abstractDHCP(w http.ResponseWriter, r *http.Request) {
+	p.Lock()
+	defer p.Unlock()
+
+	req := AbstractDHCPRequest{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+					http.Error(w, err.Error(), 400)
+					return
+	}
+
+	if strings.TrimSpace(req.Identifier) != req.Identifier {
+		http.Error(w, "Invalid Identifier", 400)
+		return
+	}
+
+	record, success := p.requestRecord(req.Identifier, 0)
+	if !success {
+		http.Error(w, "Failed to get IP", 400)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(record)
+}
+
+
+func logRequest(handler http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+          fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+          handler.ServeHTTP(w, r)
+  })
+}
+
+
 
 var log = logger.GetLogger("plugins/tiny_subnets")
 
@@ -50,25 +101,22 @@ type PluginState struct {
 	leasefile *os.File
 }
 
-// Handler4 handles DHCPv4 packets for the range plugin
-func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
-	p.Lock()
-	defer p.Unlock()
-	record, ok := p.Recordsv4[req.ClientHWAddr.String()]
+func (p *PluginState) requestRecord(clientAddr string, subMask uint32) (*Record, bool) {
 
+	record, ok := p.Recordsv4[clientAddr]
 
 	if !ok {
 		// Allocating new address since there isn't one allocated
-		log.Printf("MAC address %s is new, leasing new IPv4 address", req.ClientHWAddr.String())
+		log.Printf("Client address %s is new, leasing new IPv4 address", clientAddr)
 
+		if (subMask != 0) {
+			// Expecting a /30
+			slash30 := binary.BigEndian.Uint32(net.IPv4Mask(255,255,255,252))
 
-		// Expecting a /30
-		subMask := binary.BigEndian.Uint32(resp.Options[uint8(dhcpv4.OptionSubnetMask)])
-		slash30 := binary.BigEndian.Uint32(net.IPv4Mask(255,255,255,252))
-
-		if subMask != slash30 {
-			log.Errorf("Only /30 (255.255.255.252) is currently supported")
-			return nil, true
+			if subMask != slash30 {
+				log.Errorf("Only /30 (255.255.255.252) is currently supported")
+				return &Record{}, false
+			}
 		}
 
 		//run from start until end, incrementing by 4
@@ -94,8 +142,8 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 		}
 
 		if ip == nil {
-			log.Errorf("Could not allocate IP for MAC %s: ran out", req.ClientHWAddr.String())
-			return nil, true
+			log.Errorf("Could not allocate IP for ClientAddr %s: ran out", clientAddr)
+			return &Record{}, false
 		}
 
 		rec := Record{
@@ -104,20 +152,22 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 			expires: time.Now().Add(p.LeaseTime),
 		}
 
-		err := p.saveIPAddress(req.ClientHWAddr, &rec)
+		err := p.saveIPAddress(clientAddr, &rec)
 		if err != nil {
-			log.Errorf("SaveIPAddress for MAC %s failed: %v", req.ClientHWAddr.String(), err)
+			log.Errorf("SaveIPAddress for MAC %s failed: %v", clientAddr, err)
+			return &Record{}, false
 		}
-		p.Recordsv4[req.ClientHWAddr.String()] = &rec
+		p.Recordsv4[clientAddr] = &rec
 		p.IPTaken[ binary.BigEndian.Uint32(ip.To4()) ] = true
 		record = &rec
 	} else {
 		// Ensure we extend the existing lease at least past when the one we're giving expires
 		if record.expires.Before(time.Now().Add(p.LeaseTime)) {
 			record.expires = time.Now().Add(p.LeaseTime).Round(time.Second)
-			err := p.saveIPAddress(req.ClientHWAddr, record)
+			err := p.saveIPAddress(clientAddr, record)
 			if err != nil {
-				log.Errorf("Could not persist lease for MAC %s: %v", req.ClientHWAddr.String(), err)
+				log.Errorf("Could not persist lease for ClientAddr %s: %v", clientAddr, err)
+				return &Record{}, false
 			}
 		}
 
@@ -128,13 +178,28 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 
 	}
 
+	return record, true
+}
+
+// Handler4 handles DHCPv4 packets for the range plugin
+func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+	p.Lock()
+	defer p.Unlock()
+
+	subMask := binary.BigEndian.Uint32(resp.Options[uint8(dhcpv4.OptionSubnetMask)])
+
+	record, success := p.requestRecord(req.ClientHWAddr.String(), subMask)
+	if !success {
+		return nil, true
+	}
+
 	resp.YourIPAddr = record.IP
 
 	resp.Options.Update(dhcpv4.OptIPAddressLeaseTime(p.LeaseTime.Round(time.Second)))
 	resp.Options.Update(dhcpv4.OptRouter(record.RouterIP))
 	//resp.Options.Updaet()
 
-	log.Printf("found IP address %s for MAC %s", record.IP, req.ClientHWAddr.String())
+	log.Printf("found IP address %s for ClientAddr %s", record.IP, req.ClientHWAddr.String())
 	return resp, false
 }
 
@@ -178,12 +243,21 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 		p.IPTaken[binary.BigEndian.Uint32(record.IP.To4())] = true
 	}
 
-
 	log.Printf("Loaded %d DHCPv4 leases from %s", len(p.Recordsv4), filename)
 
 	if err := p.registerBackingFile(filename); err != nil {
 		return nil, fmt.Errorf("could not setup lease storage: %w", err)
 	}
+
+	unix_plugin_router := mux.NewRouter().StrictSlash(true)
+	unix_plugin_router.HandleFunc("/DHCPRequest", p.abstractDHCP).Methods("PUT")
+	os.Remove(UNIX_PLUGIN_LISTENER)
+	unixPluginListener, err := net.Listen("unix", UNIX_PLUGIN_LISTENER)
+	if err != nil {
+					panic(err)
+	}
+	pluginServer := http.Server{Handler: logRequest(unix_plugin_router)}
+	pluginServer.Serve(unixPluginListener)
 
 	return p.Handler4, nil
 }
