@@ -46,7 +46,9 @@ func (p *PluginState) abstractDHCP(w http.ResponseWriter, r *http.Request) {
 					return
 	}
 
-	if req.Identifier == "" || (strings.TrimSpace(req.Identifier) != req.Identifier) || strings.Contains(req.Identifier, " ") {
+	if req.Identifier == "" || (strings.TrimSpace(req.Identifier) != req.Identifier) ||
+		strings.Contains(req.Identifier, " ") ||
+		strings.Contains(req.Identifier, "\n")	{
 		http.Error(w, "Invalid Identifier", 400)
 		return
 	}
