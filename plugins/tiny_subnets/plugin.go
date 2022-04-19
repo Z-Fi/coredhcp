@@ -259,7 +259,7 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 					panic(err)
 	}
 	pluginServer := http.Server{Handler: logRequest(unix_plugin_router)}
-	pluginServer.Serve(unixPluginListener)
+	go pluginServer.Serve(unixPluginListener)
 
 	return p.Handler4, nil
 }
