@@ -28,6 +28,10 @@ import (
 
 var UNIX_PLUGIN_LISTENER = "/state/dhcp/tinysubnets_plugin"
 
+func healthy(w http.ResponseWriter, r *http.Request) {
+	//ok
+}
+
 type AbstractDHCPRequest struct {
 	Identifier string
 }
@@ -252,6 +256,7 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 	}
 
 	unix_plugin_router := mux.NewRouter().StrictSlash(true)
+	unix_plugin_router.HandleFunc("/healthy", healthy).Methods("GET")
 	unix_plugin_router.HandleFunc("/DHCPRequest", p.abstractDHCP).Methods("PUT")
 	os.Remove(UNIX_PLUGIN_LISTENER)
 	unixPluginListener, err := net.Listen("unix", UNIX_PLUGIN_LISTENER)
