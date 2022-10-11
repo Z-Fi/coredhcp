@@ -82,7 +82,7 @@ func (p *PluginState) executeHandler4(state *handler.PropagateState, req, resp *
 
 	err = cmd.Run()
 	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
+		log.Infof("cmd.Run() failed with %s\n", err)
 	}
 
 	return resp, false
