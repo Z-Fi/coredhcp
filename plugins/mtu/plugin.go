@@ -42,7 +42,7 @@ func setup4(args ...string) (handler.Handler4, error) {
 }
 
 // Handler4 handles DHCPv4 packets for the mtu plugin
-func Handler4(req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
+func Handler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
 	if req.IsOptionRequested(dhcpv4.OptionInterfaceMTU) {
 		resp.Options.Update(dhcpv4.Option{Code: dhcpv4.OptionInterfaceMTU, Value: dhcpv4.Uint16(mtu)})
 	}
