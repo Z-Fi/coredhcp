@@ -126,7 +126,7 @@ func nbpHandler6(state *handler.PropagateState, req, resp dhcpv6.DHCPv6) (dhcpv6
 }
 
 func nbpHandler4(state *handler.PropagateState, req, resp *dhcpv4.DHCPv4) (*dhcpv4.DHCPv4, bool) {
-	if opt66 == nil
+	if opt66 == nil {
 		// nothing to do
 		return resp, true
 	}
