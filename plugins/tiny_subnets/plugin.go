@@ -1,6 +1,5 @@
 /*
 This plugin supports assignment with  /30 addresses for small, segmented subnets
-
 */
 package tiny_subnets
 
@@ -10,9 +9,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/coredhcp/coredhcp/handler"
 	"github.com/coredhcp/coredhcp/logger"
@@ -21,9 +20,9 @@ import (
 )
 
 import (
-        "github.com/gorilla/mux"
-        "net/http"
-				"encoding/json"
+	"encoding/json"
+	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var UNIX_PLUGIN_LISTENER = "/state/dhcp/tinysubnets_plugin"
@@ -46,13 +45,13 @@ func (p *PluginState) abstractDHCP(w http.ResponseWriter, r *http.Request) {
 	req := AbstractDHCPRequest{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-					http.Error(w, err.Error(), 400)
-					return
+		http.Error(w, err.Error(), 400)
+		return
 	}
 
 	if req.Identifier == "" || (strings.TrimSpace(req.Identifier) != req.Identifier) ||
 		strings.Contains(req.Identifier, " ") ||
-		strings.Contains(req.Identifier, "\n")	{
+		strings.Contains(req.Identifier, "\n") {
 		http.Error(w, "Invalid Identifier", 400)
 		return
 	}
@@ -66,15 +65,14 @@ func (p *PluginState) abstractDHCP(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(record)
 }
 
-
 func logRequest(handler http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-          fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
-          handler.ServeHTTP(w, r)
-  })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.String() != "/healthy" {
+			fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		}
+		handler.ServeHTTP(w, r)
+	})
 }
-
-
 
 var log = logger.GetLogger("plugins/tiny_subnets")
 
@@ -84,16 +82,16 @@ var Plugin = plugins.Plugin{
 	Setup4: setupPoint,
 }
 
-//Record holds an IP lease record
+// Record holds an IP lease record
 type Record struct {
-	IP      net.IP
-	RouterIP	net.IP
-	expires time.Time
+	IP       net.IP
+	RouterIP net.IP
+	expires  time.Time
 }
 
 var (
 	ipRangeStart net.IP
-	ipRangeEnd net.IP
+	ipRangeEnd   net.IP
 )
 
 // PluginState is the data held by an instance of the range plugin
@@ -102,7 +100,7 @@ type PluginState struct {
 	sync.Mutex
 	// Recordsv4 holds a MAC -> IP address and lease time mapping
 	Recordsv4 map[string]*Record
-	IPTaken map[uint32]bool
+	IPTaken   map[uint32]bool
 	LeaseTime time.Duration
 	leasefile *os.File
 }
@@ -115,9 +113,9 @@ func (p *PluginState) requestRecord(clientAddr string, subMask uint32) (*Record,
 		// Allocating new address since there isn't one allocated
 		log.Printf("Client address %s is new, leasing new IPv4 address", clientAddr)
 
-		if (subMask != 0) {
+		if subMask != 0 {
 			// Expecting a /30
-			slash30 := binary.BigEndian.Uint32(net.IPv4Mask(255,255,255,252))
+			slash30 := binary.BigEndian.Uint32(net.IPv4Mask(255, 255, 255, 252))
 
 			if subMask != slash30 {
 				log.Errorf("Only /30 (255.255.255.252) is currently supported")
@@ -132,19 +130,19 @@ func (p *PluginState) requestRecord(clientAddr string, subMask uint32) (*Record,
 		var routerIP net.IP
 		var ip net.IP
 
-		for u32_ip := ipStart; u32_ip + 3 < ipEnd; u32_ip += 4 {
-				u := u32_ip + 1
-				routerIP = net.IPv4(byte(u>>24), byte(u>>16), byte(u>>8), byte(u))
+		for u32_ip := ipStart; u32_ip+3 < ipEnd; u32_ip += 4 {
+			u := u32_ip + 1
+			routerIP = net.IPv4(byte(u>>24), byte(u>>16), byte(u>>8), byte(u))
 
-				u = u32_ip + 2
-				ip = net.IPv4(byte(u>>24), byte(u>>16), byte(u>>8), byte(u))
+			u = u32_ip + 2
+			ip = net.IPv4(byte(u>>24), byte(u>>16), byte(u>>8), byte(u))
 
-				if (p.IPTaken[u]) {
-					continue
-				} else {
-					//found an entry to use
-					break;
-				}
+			if p.IPTaken[u] {
+				continue
+			} else {
+				//found an entry to use
+				break
+			}
 		}
 
 		if ip == nil {
@@ -153,9 +151,9 @@ func (p *PluginState) requestRecord(clientAddr string, subMask uint32) (*Record,
 		}
 
 		rec := Record{
-			IP:      ip.To4(),
+			IP:       ip.To4(),
 			RouterIP: routerIP,
-			expires: time.Now().Add(p.LeaseTime),
+			expires:  time.Now().Add(p.LeaseTime),
 		}
 
 		err := p.saveIPAddress(clientAddr, &rec)
@@ -164,7 +162,7 @@ func (p *PluginState) requestRecord(clientAddr string, subMask uint32) (*Record,
 			return &Record{}, false
 		}
 		p.Recordsv4[clientAddr] = &rec
-		p.IPTaken[ binary.BigEndian.Uint32(ip.To4()) ] = true
+		p.IPTaken[binary.BigEndian.Uint32(ip.To4())] = true
 		record = &rec
 	} else {
 		// Ensure we extend the existing lease at least past when the one we're giving expires
@@ -244,7 +242,7 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 		return nil, fmt.Errorf("could not load records from file: %v", err)
 	}
 
-	p.IPTaken = map[uint32]bool {}
+	p.IPTaken = map[uint32]bool{}
 	for _, record := range p.Recordsv4 {
 		p.IPTaken[binary.BigEndian.Uint32(record.IP.To4())] = true
 	}
@@ -261,7 +259,7 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 	os.Remove(UNIX_PLUGIN_LISTENER)
 	unixPluginListener, err := net.Listen("unix", UNIX_PLUGIN_LISTENER)
 	if err != nil {
-					panic(err)
+		panic(err)
 	}
 	pluginServer := http.Server{Handler: logRequest(unix_plugin_router)}
 	go pluginServer.Serve(unixPluginListener)
