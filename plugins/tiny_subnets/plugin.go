@@ -1,6 +1,5 @@
 /*
 This plugin supports assignment with  /30 addresses for small, segmented subnets
-
 */
 package tiny_subnets
 
@@ -11,9 +10,9 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"time"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/coredhcp/coredhcp/handler"
 	"github.com/coredhcp/coredhcp/logger"
@@ -22,33 +21,23 @@ import (
 )
 
 import (
-    "github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 )
 
 var TEST_PREFIX = os.Getenv("TEST_PREFIX")
-var UNIX_PLUGIN_LISTENER = TEST_PREFIX + "/state/dhcp/tinysubnets_plugin"
 var UNIX_API_DHCP_LISTENER = TEST_PREFIX + "/state/dhcp/apisock"
 
-func healthy(w http.ResponseWriter, r *http.Request) {
-	//ok
-}
-
-type AbstractDHCPRequest struct {
-	Identifier string
-}
-
 type DHCPRequest struct {
-	MAC				    string
-	Identifier    string
-	Name   				string
-	Iface  				string
+	MAC        string
+	Identifier string
+	Name       string
+	Iface      string
 }
-
 
 type DHCPResponse struct {
-	IP    	 		string
-	RouterIP 		string
-	LeaseTime   string
+	IP        string
+	RouterIP  string
+	LeaseTime string
 }
 
 func requestIP(req DHCPRequest) (DHCPResponse, error) {
@@ -93,42 +82,12 @@ func requestIP(req DHCPRequest) (DHCPResponse, error) {
 	return dhcp_resp, nil
 }
 
-// When an abstract device is added:
-// request an IP address, returning a Record on success
-// This allows decoupling DHCP records from MAC addresses/UDP DHCP packets.
-func (p *PluginState) abstractDHCP(w http.ResponseWriter, r *http.Request) {
-
-	req := AbstractDHCPRequest{}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-					http.Error(w, err.Error(), 400)
-					return
-	}
-
-	if req.Identifier == "" || (strings.TrimSpace(req.Identifier) != req.Identifier) ||
-		strings.Contains(req.Identifier, " ") ||
-		strings.Contains(req.Identifier, "\n")	{
-		http.Error(w, "Invalid Identifier", 400)
-		return
-	}
-
-	record, success := requestIP(DHCPRequest{"", req.Identifier, "", ""})
-	if success != nil {
-		http.Error(w, "Failed to get IP", 400)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(record)
-}
-
-
 func logRequest(handler http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-          fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
-          handler.ServeHTTP(w, r)
-  })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("%s %s %s\n", r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	})
 }
-
 
 var log = logger.GetLogger("plugins/tiny_subnets")
 
@@ -137,7 +96,6 @@ var Plugin = plugins.Plugin{
 	Name:   "tiny_subnets",
 	Setup4: setupPoint,
 }
-
 
 // PluginState is the data held by an instance of the range plugin
 type PluginState struct {
@@ -151,13 +109,12 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 		log.Fatalf("regexp failed: %v", err)
 	}
 	filteredHostName := reg.ReplaceAllString(req.HostName(), "")
-  if filteredHostName == "" {
-    filteredHostName = "DefaultMissingName"
-  }
+	if filteredHostName == "" {
+		filteredHostName = "DefaultMissingName"
+	}
 
 	interfaceName := string(state.InterfaceName)
 	interfaceName = reg.ReplaceAllString(interfaceName, "")
-
 
 	dhcp_req := DHCPRequest{req.ClientHWAddr.String(), "", filteredHostName, interfaceName}
 
@@ -186,17 +143,6 @@ func setupPoint(args ...string) (handler.Handler4, error) {
 	)
 
 	/* config arguments were deprecated  */
-
-	unix_plugin_router := mux.NewRouter().StrictSlash(true)
-	unix_plugin_router.HandleFunc("/healthy", healthy).Methods("GET")
-	unix_plugin_router.HandleFunc("/DHCPRequest", p.abstractDHCP).Methods("PUT")
-	os.Remove(UNIX_PLUGIN_LISTENER)
-	unixPluginListener, err := net.Listen("unix", UNIX_PLUGIN_LISTENER)
-	if err != nil {
-					panic(err)
-	}
-	pluginServer := http.Server{Handler: logRequest(unix_plugin_router)}
-	go pluginServer.Serve(unixPluginListener)
 
 	return p.Handler4, nil
 }
