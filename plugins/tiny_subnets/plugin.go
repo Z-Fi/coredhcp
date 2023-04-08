@@ -11,17 +11,12 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/coredhcp/coredhcp/handler"
 	"github.com/coredhcp/coredhcp/logger"
 	"github.com/coredhcp/coredhcp/plugins"
 	"github.com/insomniacslk/dhcp/dhcpv4"
-)
-
-import (
-	"github.com/gorilla/mux"
 )
 
 var TEST_PREFIX = os.Getenv("TEST_PREFIX")
@@ -144,7 +139,6 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 
 func setupPoint(args ...string) (handler.Handler4, error) {
 	var (
-		err error
 		p   PluginState
 	)
 
