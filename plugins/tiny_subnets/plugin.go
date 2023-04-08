@@ -116,6 +116,12 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 	interfaceName := string(state.InterfaceName)
 	interfaceName = reg.ReplaceAllString(interfaceName, "")
 
+	wanif := os.Getenv("WANIF")
+	if wanif != "" && wanif == interfaceName {
+		log.Printf("Refusing to handle DHCP request from upstream WANIF for " + req.ClientHWAddr.String())
+		return nil, true
+	}
+
 	dhcp_req := DHCPRequest{req.ClientHWAddr.String(), "", filteredHostName, interfaceName}
 
 	record, success := requestIP(dhcp_req)
