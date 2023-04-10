@@ -124,7 +124,7 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 		return nil, true
 	}
 
-	resp.YourIPAddr = net.IP(record.IP).To4()
+	resp.YourIPAddr = net.ParseIP(record.IP).To4()
 
 	lt, err := time.ParseDuration(record.LeaseTime)
 	if err == nil {
