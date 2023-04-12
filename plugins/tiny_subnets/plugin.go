@@ -135,7 +135,12 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 
 	//override DNS settings
 	if record.DNSIP != "" && req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
-		resp.Options.Update(dhcpv4.OptDNS(record.DNSIP))
+		dns_parsed := net.ParseIP(record.DNSIP)
+		if dns_parsed != nil {
+			resp.Options.Update(dhcpv4.OptDNS(dns_parsed))
+		} else {
+			log.Printf("[-] Failed to parse record DNS IP: %s", record.DNSIP)
+		}
 	}
 
 	log.Printf("found IP address %s for ClientAddr %s", record.IP, req.ClientHWAddr.String())
