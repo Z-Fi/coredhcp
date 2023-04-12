@@ -141,7 +141,8 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 		dns_parsed := net.ParseIP(record.DNSIP)
 		if dns_parsed != nil {
 			if req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
-				resp.Options.Update(dhcpv4.OptDNS(dns_parsed))
+				dns_servers := []net.IP{dns_parsed}
+				resp.Options.Update(dhcpv4.OptDNS(dns_servers...))
 			}
 			//update the server id to match the DNSIP
 			serverId = net.ParseIP(record.DNSIP)
