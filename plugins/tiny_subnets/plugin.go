@@ -134,7 +134,7 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 	resp.Options.Update(dhcpv4.OptRouter(net.IP(record.RouterIP)))
 
 	//override DNS settings
-	if req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
+	if record.DNSIP != "" && req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
 		resp.Options.Update(dhcpv4.OptDNS(record.DNSIP))
 	}
 
