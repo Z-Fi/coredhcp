@@ -32,6 +32,7 @@ type DHCPRequest struct {
 type DHCPResponse struct {
 	IP        string
 	RouterIP  string
+	DNSIP     string
 	LeaseTime string
 }
 
@@ -131,7 +132,11 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 		resp.Options.Update(dhcpv4.OptIPAddressLeaseTime(lt.Round(time.Second)))
 	}
 	resp.Options.Update(dhcpv4.OptRouter(net.IP(record.RouterIP)))
-	//resp.Options.Updaet()
+
+	//override DNS settings
+	if req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
+		resp.Options.Update(dhcpv4.OptDNS(record.DNSIP))
+	}
 
 	log.Printf("found IP address %s for ClientAddr %s", record.IP, req.ClientHWAddr.String())
 	return resp, false
@@ -139,7 +144,7 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 
 func setupPoint(args ...string) (handler.Handler4, error) {
 	var (
-		p   PluginState
+		p PluginState
 	)
 
 	/* config arguments were deprecated  */
