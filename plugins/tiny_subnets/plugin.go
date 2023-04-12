@@ -133,15 +133,27 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 	}
 	resp.Options.Update(dhcpv4.OptRouter(net.IP(record.RouterIP)))
 
+	serverId := net.ParseIP(record.RouterIP)
+
 	//override DNS settings
-	if record.DNSIP != "" && req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
+	if record.DNSIP != "" {
 		dns_parsed := net.ParseIP(record.DNSIP)
 		if dns_parsed != nil {
-			resp.Options.Update(dhcpv4.OptDNS(dns_parsed))
+			if req.IsOptionRequested(dhcpv4.OptionDomainNameServer) {
+				resp.Options.Update(dhcpv4.OptDNS(dns_parsed))
+			}
+			//update the server id to match the DNSIP
+			serverId = net.ParseIP(record.DNSIP)
 		} else {
 			log.Printf("[-] Failed to parse record DNS IP: %s", record.DNSIP)
 		}
 	}
+
+	resp.UpdateOption(dhcpv4.OptServerIdentifier(serverId))
+
+	//set netmask /30 for tinynets.
+	netmask := net.IPv4Mask(255, 255, 255, 252)
+	resp.Options.Update(dhcpv4.OptSubnetMask(netmask))
 
 	log.Printf("found IP address %s for ClientAddr %s", record.IP, req.ClientHWAddr.String())
 	return resp, false
