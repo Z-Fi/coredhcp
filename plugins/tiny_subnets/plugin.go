@@ -131,7 +131,8 @@ func (p *PluginState) Handler4(state *handler.PropagateState, req, resp *dhcpv4.
 	if err == nil {
 		resp.Options.Update(dhcpv4.OptIPAddressLeaseTime(lt.Round(time.Second)))
 	}
-	resp.Options.Update(dhcpv4.OptRouter(net.IP(record.RouterIP)))
+	routers := []net.IP{net.ParseIP(record.RouterIP)}
+	resp.Options.Update(dhcpv4.OptRouter(routers...))
 
 	serverId := net.ParseIP(record.RouterIP)
 
