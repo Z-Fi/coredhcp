@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/milosgajdos83/tenus"
+	"github.com/milosgajdos/tenus"
 	"net"
 	"time"
 )
