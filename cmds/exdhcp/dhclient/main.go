@@ -1,25 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"log"
-	"net"
-	"time"
-
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/client4"
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/client6"
 	"github.com/insomniacslk/dhcp/netboot"
+	"io/ioutil"
+	"log"
+	"net"
+	"time"
 )
 
 var (
-	ver     = flag.Int("v", 6, "IP version to use")
-	ifname  = flag.String("i", "eth0", "Interface name")
-	dryrun  = flag.Bool("dryrun", false, "Do not change network configuration")
-	debug   = flag.Bool("d", false, "Print debug output")
-	retries = flag.Int("r", 3, "Number of retries before giving up")
-	noIfup  = flag.Bool("noifup", false, "If set, don't wait for the interface to be up")
+	ver       = flag.Int("v", 6, "IP version to use")
+	ifname    = flag.String("i", "eth0", "Interface name")
+	dryrun    = flag.Bool("dryrun", false, "Do not change network configuration")
+	debug     = flag.Bool("d", false, "Print debug output")
+	retries   = flag.Int("r", 3, "Number of retries before giving up")
+	noIfup    = flag.Bool("noifup", false, "If set, don't wait for the interface to be up")
+	leaseFile = flag.String("lf", "", "If set, write lease file")
 )
 
 func dhclient6(ifname string, attempts int, verbose bool) (*netboot.BootConf, error) {
@@ -122,9 +124,16 @@ func main() {
 	// configure the interface
 	log.Printf("Setting network configuration:")
 	log.Printf("%+v", bootconf)
+
 	if *dryrun {
 		log.Printf("dry run requested, not changing network configuration")
 	} else {
+
+		if *leaseFile != "" {
+			data, _ := json.MarshalIndent(bootconf.NetConf, "", " ")
+			ioutil.WriteFile(*leaseFile, data, 0600)
+		}
+
 		if err := netboot.ConfigureInterface(*ifname, &bootconf.NetConf); err != nil {
 			log.Fatal(err)
 		}
