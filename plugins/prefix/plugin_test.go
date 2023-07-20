@@ -19,7 +19,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.AddOption(dhcpv6.OptClientID(dhcpv6.Duid{
+	req.AddOption(dhcpv6.OptClientID(&dhcpv6.DUIDLL{
 		Type:          dhcpv6.DUID_LL,
 		HwType:        dhcpIana.HWTypeEthernet,
 		LinkLayerAddr: net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
@@ -48,10 +48,11 @@ func TestRoundTrip(t *testing.T) {
 
 	// Sanity checks on the response
 	success := result.GetOption(dhcpv6.OptionStatusCode)
+        var status dhcpv6.OptStatusCode
 	if len(success) > 1 {
 		t.Fatal("Got multiple StatusCode options")
 	} else if len(success) == 0 { // Everything OK
-	} else if status, err := dhcpv6.ParseOptStatusCode(success[0].ToBytes()); err != nil || status.StatusCode != dhcpIana.StatusSuccess {
+	} else if err := status.FromBytes(success[0].ToBytes()); err != nil || status.StatusCode != dhcpIana.StatusSuccess {
 		t.Fatalf("Did not get a (implicit or explicit) success status code: %v", success)
 	}
 

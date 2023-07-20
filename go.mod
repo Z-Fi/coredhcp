@@ -7,7 +7,6 @@ require (
 	github.com/chappjc/logrus-prefix v0.0.0-20180227015900-3a1d64819adb
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/google/gopacket v1.1.19
-	github.com/gorilla/mux v1.8.0
 	github.com/insomniacslk/dhcp v0.0.0-20230612134759-b20c9ba983df
 	github.com/jsimonetti/rtnetlink v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

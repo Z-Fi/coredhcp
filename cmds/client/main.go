@@ -45,8 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	duid := dhcpv6.Duid{
-		Type:          dhcpv6.DUID_LLT,
+	duid := dhcpv6.DUIDLLT{
 		HwType:        iana.HWTypeEthernet,
 		Time:          dhcpv6.GetTime(),
 		LinkLayerAddr: mac,
