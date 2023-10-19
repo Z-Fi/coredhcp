@@ -11,6 +11,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
+	"os/exec"
+	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -22,6 +26,8 @@ var (
 	retries   = flag.Int("r", 3, "Number of retries before giving up")
 	noIfup    = flag.Bool("noifup", false, "If set, don't wait for the interface to be up")
 	leaseFile = flag.String("lf", "", "If set, write lease file")
+	nf        = flag.Bool("nf", false, "If set, do not fork for renewing the lease")
+	child     = flag.Bool("child", false, "If set, this is a child process for renewal")
 )
 
 func dhclient6(ifname string, attempts int, verbose bool) (*netboot.BootConf, error) {
@@ -99,9 +105,7 @@ func dhclient4(ifname string, attempts int, verbose bool) (*netboot.BootConf, er
 	return netconf, err
 }
 
-func main() {
-	flag.Parse()
-
+func dhcp() error {
 	var (
 		err      error
 		bootconf *netboot.BootConf
@@ -110,7 +114,8 @@ func main() {
 	if !*noIfup {
 		_, err = netboot.IfUp(*ifname, 5*time.Second)
 		if err != nil {
-			log.Fatalf("failed to bring interface %s up: %v", *ifname, err)
+			log.Printf("[-] failed to bring interface %s up: %v", *ifname, err)
+			return err
 		}
 	}
 	if *ver == 6 {
@@ -119,7 +124,8 @@ func main() {
 		bootconf, err = dhclient4(*ifname, *retries+1, *debug)
 	}
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("[-] dhclient failed", err)
+		return err
 	}
 	// configure the interface
 	log.Printf("Setting network configuration:")
@@ -134,8 +140,67 @@ func main() {
 			ioutil.WriteFile(*leaseFile, data, 0600)
 		}
 
+		//set lease time
+		for _, entry := range bootconf.NetConf.Addresses {
+			if entry.ValidLifetime != 0 {
+				os.Setenv("LEASE_TIME", (entry.ValidLifetime / 1000000000).String())
+				break
+			}
+		}
+
 		if err := netboot.ConfigureInterface(*ifname, &bootconf.NetConf); err != nil {
-			log.Fatal(err)
+			log.Println("failed to configure interface", err)
+			return err
 		}
 	}
+
+	return nil
+}
+
+func main() {
+	flag.Parse()
+
+	//by default, nf no fork is false,
+	//fork a child runner and return
+	if !*nf {
+		dhcp()
+
+		args := append(os.Args, "-child")
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+
+		if err := cmd.Start(); err != nil {
+			log.Printf("Error starting child process: %v\n", err)
+			return
+		}
+		log.Printf("Child process started with PID %d\n", cmd.Process.Pid)
+		return
+	} else if *child {
+		for {
+			lts := os.Getenv("LEASE_TIME")
+			lt := 0
+			if lts != "" {
+				x, err := strconv.Atoi(lts)
+				if err == nil {
+					lt = x
+				}
+			}
+			if lt != 0 {
+				//sleep half of lease time first
+				time.Sleep(time.Duration(lt/2) * time.Second)
+			}
+			//run indefinitely
+			for dhcp() != nil {
+				//back off every minute
+				time.Sleep(60 * time.Second)
+			}
+			//okay succeeded. wait until lease time
+		}
+	} else {
+		// run once. no fork set. child not set
+		dhcp()
+	}
+
 }
