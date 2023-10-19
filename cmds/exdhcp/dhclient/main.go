@@ -162,22 +162,8 @@ func main() {
 
 	//by default, nf no fork is false,
 	//fork a child runner and return
-	if !*nf {
-		dhcp()
 
-		args := append(os.Args, "-child")
-		cmd := exec.Command(args[0], args[1:]...)
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid: true,
-		}
-
-		if err := cmd.Start(); err != nil {
-			log.Printf("Error starting child process: %v\n", err)
-			return
-		}
-		log.Printf("Child process started with PID %d\n", cmd.Process.Pid)
-		return
-	} else if *child {
+	if *child {
 		for {
 			lts := os.Getenv("LEASE_TIME")
 			lt := 0
@@ -198,6 +184,21 @@ func main() {
 			}
 			//okay succeeded. wait until lease time
 		}
+	} else if !*nf {
+		dhcp()
+
+		args := append(os.Args, "-child")
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid: true,
+		}
+
+		if err := cmd.Start(); err != nil {
+			log.Printf("Error starting child process: %v\n", err)
+			return
+		}
+		log.Printf("Child process started with PID %d\n", cmd.Process.Pid)
+		return
 	} else {
 		// run once. no fork set. child not set
 		dhcp()
