@@ -144,7 +144,7 @@ func dhcp() error {
 		//set lease time
 		for _, entry := range bootconf.NetConf.Addresses {
 			if entry.ValidLifetime != 0 {
-				lts := fmt.Sprintf("%d", int64(entry.ValidLifetime/1000))
+				lts := fmt.Sprintf("%d", int64(entry.ValidLifetime/1000000000))
 				fmt.Println("lease time %d", lts)
 				os.Setenv("LEASE_TIME", lts)
 				break
